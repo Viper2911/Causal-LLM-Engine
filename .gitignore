@@ -1,0 +1,12 @@
+data/*.csv
+database/*.db
+.env
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv/
+.streamlit/
+.vscode/
+.DS_Store
