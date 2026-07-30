@@ -34,6 +34,12 @@ def parse_business_question(user_question: str)-> dict:
         full_prompt,
         generation_config={"response_mime_type": "application/json"}
     )
+    try:
+        parsed_json=json.loads(response.text)
+        return parsed_json
+    except json.JSONDecodeError:
+        print("Error: Model output was not valid JSON")
+        return {}
 if __name__ == "__main__":
     test_question="Does paying in high installments cause higher total payment values,controlling for freight price?"
     result=parse_business_question(test_question)
