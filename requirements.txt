@@ -1,0 +1,15 @@
+# Data Engineering & Database
+pandas
+numpy
+SQLAlchemy
+
+# Causal Inference Math Engine
+dowhy
+scikit-learn
+
+# Intelligence Layer & Security
+google-generativeai
+python-dotenv
+
+# Frontend Web Interface
+streamlit
