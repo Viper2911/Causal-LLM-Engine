@@ -20,13 +20,13 @@ def preprocess_data(df: pd.DataFrame, treatment: str, outcome: str) -> pd.DataFr
         except (ValueError, TypeError):
             pass 
             
-    df_clean[treatment] = df_clean[treatment].astype(float)
+    df_clean[treatment] = df_clean[treatment].astype(bool)
     df_clean[outcome] = df_clean[outcome].astype(float)
     
     return df_clean
 
 def discover_stronger_causes(df: pd.DataFrame, treatment: str, outcome: str, confounders: list) -> list:
-    """Standardizes variables and runs regression to see if any confounder has a stronger impact."""
+    """Standardizes variables and runs sklearn regression to check confounder impact."""
     if not confounders:
         return []
     
@@ -81,10 +81,11 @@ def run_causal_analysis(df: pd.DataFrame, treatment: str, outcome: str, confound
             common_causes=valid_confounders
         )
         identified_estimand = model.identify_effect(proceed_when_unidentifiable=True)
+        
         estimate = model.estimate_effect(
             identified_estimand,
-            method_name="backdoor.linear_regression",
-            test_significance=False
+            method_name="backdoor.propensity_score_weighting",
+            target_units="ate"
         )
         
         try:
@@ -116,7 +117,6 @@ if __name__ == "__main__":
     np.random.seed(42)
     delayed = np.random.randint(0, 2, 100)
     freight = np.random.uniform(10, 100, 100)
-    
     review = 5.0 - (1.5 * delayed) - (0.01 * freight) + np.random.normal(0, 0.5, 100)
 
     dummy_data = pd.DataFrame({
