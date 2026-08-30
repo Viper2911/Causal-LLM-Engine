@@ -34,7 +34,13 @@ model = CausalModel(
     common_causes=["freight_value"]
 )
 
-identified_estimand = model.identify_effect(proceed_when_unidentifiable=True)
+identified_estimand = model.identify_effect(proceed_when_unidentifiable=True(venv) Viper777@fedora:~/Documents/Causal-LLM-Engine$ python debug_dowhy.py
+--- STARTING DIAGNOSTIC ---
+Data built. Initializing DoWhy...
+Effect Identified. Running Estimate (Using Propensity Score Weighting)...
+propensity_score_weighting
+
+SUCCESS! ATE: -1.5376060820028776)
 
 print("Effect Identified. Running Estimate (Using Propensity Score Weighting)...")
 

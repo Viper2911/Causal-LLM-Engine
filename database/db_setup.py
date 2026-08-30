@@ -2,12 +2,13 @@ import pandas as pd
 import os
 from sqlalchemy import create_engine
 
-db_path="sqlite:///database/olist.db"
+base_dir=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+db_path=os.path.join(base_dir,"database","olist.db")
+data_dir=os.path.join(base_dir,"data")
 
 def build_db():
     print("Initializing SQLite database engine...")
-    engine=create_engine(db_path)
-    data_dir="data/"
+    engine=create_engine(f"sqlite:///{db_path}")
 
     files_to_load = {
         "orders": "olist_orders_dataset.csv",
@@ -26,10 +27,10 @@ def build_db():
             print(f"Loaded '{table_name}' table successfully.")
         else:
             print(f"Skipped '{file_name}': File not found in data/ directory.")
-    print("Database build complete: database/olist.db is live.")
+    print(f"Database build complete: {db_path} is live.")
 
 def execute_query(sql_string: str)->pd.DataFrame:
-    engine=create_engine(db_path)
+    engine=create_engine(f"sqlite:///{db_path}")
     try:
         return pd.read_sql_query(sql_string,engine)
     except Exception as e:

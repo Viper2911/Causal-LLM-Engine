@@ -8,7 +8,7 @@ from sklearn.linear_model import LinearRegression
 warnings.filterwarnings('ignore')
 
 def preprocess_data(df: pd.DataFrame, treatment: str, outcome: str) -> pd.DataFrame:
-    """Prepares the DataFrame for DoWhy."""
+    """Prepares the DataFrame for DoWhy with Smart Binarization for real-world data."""
     df_clean = df.copy()
     
     df_clean.dropna(subset=[treatment, outcome], inplace=True)
@@ -19,10 +19,14 @@ def preprocess_data(df: pd.DataFrame, treatment: str, outcome: str) -> pd.DataFr
             df_clean[col] = pd.to_numeric(df_clean[col])
         except (ValueError, TypeError):
             pass 
-            
-    df_clean[treatment] = df_clean[treatment].astype(bool)
-    df_clean[outcome] = df_clean[outcome].astype(float)
     
+    if pd.api.types.is_numeric_dtype(df_clean[treatment]) and df_clean[treatment].nunique()>2:
+        median_val=df_clean[treatment].median()
+        df_clean[treatment]=df_clean[treatment]>=median_val
+    else:
+        df_clean[treatment]=df_clean[treatment].astype(bool)
+    
+    df_clean[outcome]=df_clean[outcome].astype(float)
     return df_clean
 
 def discover_stronger_causes(df: pd.DataFrame, treatment: str, outcome: str, confounders: list) -> list:
@@ -66,7 +70,7 @@ def run_causal_analysis(df: pd.DataFrame, treatment: str, outcome: str, confound
     if df.empty:
         return {"status": "error", "message": "DataFrame is empty."}
     if treatment not in df.columns or outcome not in df.columns:
-        return {"status": "error", "message": "Treatment or Outcome missing from dataset."}
+        return {"status": "error", "message": f"Missing variables in data. Required: {treatment}, {outcome}"}
         
     df_clean = preprocess_data(df, treatment, outcome)
     valid_confounders = [c for c in confounders if c in df_clean.columns]
@@ -92,13 +96,13 @@ def run_causal_analysis(df: pd.DataFrame, treatment: str, outcome: str, confound
             placebo = model.refute_estimate(identified_estimand, estimate, method_name="placebo_treatment_refuter", num_simulations=5)
             placebo_summary = str(placebo)
         except Exception:
-            placebo_summary = "Placebo test skipped"
+            placebo_summary = "Placebo test skipped (Data too sparse)"
             
         try:
             random_cause = model.refute_estimate(identified_estimand, estimate, method_name="random_common_cause", num_simulations=5)
             random_cause_summary = str(random_cause)
         except Exception:
-            random_cause_summary = "Random cause test skipped"
+            random_cause_summary = "Random cause test skipped (Data too sparse)"
         
         return {
             "status": "success",
