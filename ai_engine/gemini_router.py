@@ -1,5 +1,6 @@
 import os
 import json
+import time
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
@@ -17,6 +18,7 @@ def parse_business_question(user_question: str) -> dict:
     
     rag_context = retrieve_relevant_tables(user_question, top_k=3)
     
+    # PERFECTED PROMPT: Plain English instructions to guarantee strict JSON formatting
     system_prompt = f"""
     You are an expert Data Scientist and Causal Inference Assistant.
     You have access to a relational SQLite database. Based on semantic search, here are the relevant tables for the user's query:
@@ -24,33 +26,57 @@ def parse_business_question(user_question: str) -> dict:
     {rag_context}
     
     Your job is to read the user's business question and output a strictly formatted JSON object.
-    Do NOT wrap the output in markdown blocks (e.g., no ```json). Return raw JSON only:
+    Do NOT wrap the output in markdown blocks (e.g., no ```json). Return raw JSON only with these exact keys and format:
     {{
-        "sql_query": "<A SELECT SQLite fetch joins necessary query tables that the to variables>",
-        "treatment": "<Exact Cause column name representing the>",
-        "outcome": "<Exact Effect column name representing the>",
-        "confounders": ["<Array acting as background column exact names of variables>"],
-        "business_hypothesis": "<A 1-sentence are of summary testing we what>"
+        "sql_query": "A valid SQLite SELECT query that joins the necessary tables and returns the columns for treatment, outcome, and confounders.",
+        "treatment": "The exact column name representing the cause.",
+        "outcome": "The exact column name representing the effect.",
+        "confounders": ["Array of exact column names acting as control variables."],
+        "business_hypothesis": "A 1-sentence summary of what we are testing."
     }}
     """
     
     full_prompt = f"{system_prompt}\n\nUser Question: {user_question}"
     
-    try:
-        response = client.models.generate_content(
-            model="gemini-3.6-flash",
-            contents=full_prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json"
+    max_retries = 3
+    response = None
+    
+    for attempt in range(max_retries):
+        try:
+            response = client.models.generate_content(
+                model="gemini-3.6-flash",
+                contents=full_prompt,
+                config=types.GenerateContentConfig(response_mime_type="application/json")
             )
-        )
-        return json.loads(response.text)
+            break
+            
+        except Exception as e:
+            if "503" in str(e) and attempt < max_retries - 1:
+                print(f"Server busy (Attempt {attempt + 1}/{max_retries}). Retrying in 2.5 seconds...")
+                time.sleep(2.5)
+            else:
+                print(f"API Routing Error: {str(e)}")
+                return {}
+                
+    if not response:
+        return {}
+        
+    try:
+        raw_text = response.text.strip()
+        if raw_text.startswith("```json"):
+            raw_text = raw_text[7:]
+        if raw_text.startswith("```"):
+            raw_text = raw_text[3:]
+        if raw_text.endswith("```"):
+            raw_text = raw_text[:-3]
+            
+        return json.loads(raw_text.strip())
         
     except json.JSONDecodeError:
-        print("Error: Model output was not valid JSON. Hallucination occurred.")
+        print("Error: Model output was not valid JSON.")
         return {}
     except Exception as e:
-        print(f"API Routing Error: {str(e)}")
+        print(f"Unexpected parsing error: {str(e)}")
         return {}
 
 if __name__ == "__main__":

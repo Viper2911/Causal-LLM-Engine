@@ -7,11 +7,12 @@ from sklearn.linear_model import LinearRegression
 
 warnings.filterwarnings('ignore')
 
-def preprocess_data(df: pd.DataFrame, treatment: str, outcome: str) -> pd.DataFrame:
-    """Prepares the DataFrame for DoWhy with Smart Binarization for real-world data."""
+def preprocess_data(df: pd.DataFrame, treatment: str, outcome: str, confounders: list) -> pd.DataFrame:
+    """Prepares the DataFrame for DoWhy with Smart Binarization and comprehensive NaN handling."""
     df_clean = df.copy()
     
-    df_clean.dropna(subset=[treatment, outcome], inplace=True)
+    cols_to_check = [treatment, outcome] + confounders
+    df_clean.dropna(subset=cols_to_check, inplace=True)
     df_clean.reset_index(drop=True, inplace=True)
 
     for col in df_clean.columns:
@@ -19,14 +20,15 @@ def preprocess_data(df: pd.DataFrame, treatment: str, outcome: str) -> pd.DataFr
             df_clean[col] = pd.to_numeric(df_clean[col])
         except (ValueError, TypeError):
             pass 
-    
-    if pd.api.types.is_numeric_dtype(df_clean[treatment]) and df_clean[treatment].nunique()>2:
-        median_val=df_clean[treatment].median()
-        df_clean[treatment]=df_clean[treatment]>=median_val
+            
+    if pd.api.types.is_numeric_dtype(df_clean[treatment]) and df_clean[treatment].nunique() > 2:
+        median_val = df_clean[treatment].median()
+        df_clean[treatment] = df_clean[treatment] >= median_val
     else:
-        df_clean[treatment]=df_clean[treatment].astype(bool)
+        df_clean[treatment] = df_clean[treatment].astype(bool)
+        
+    df_clean[outcome] = df_clean[outcome].astype(float)
     
-    df_clean[outcome]=df_clean[outcome].astype(float)
     return df_clean
 
 def discover_stronger_causes(df: pd.DataFrame, treatment: str, outcome: str, confounders: list) -> list:
@@ -72,8 +74,12 @@ def run_causal_analysis(df: pd.DataFrame, treatment: str, outcome: str, confound
     if treatment not in df.columns or outcome not in df.columns:
         return {"status": "error", "message": f"Missing variables in data. Required: {treatment}, {outcome}"}
         
-    df_clean = preprocess_data(df, treatment, outcome)
-    valid_confounders = [c for c in confounders if c in df_clean.columns]
+    valid_confounders = [c for c in confounders if c in df.columns]
+    
+    df_clean = preprocess_data(df, treatment, outcome, valid_confounders)
+    
+    if df_clean.empty:
+         return {"status": "error", "message": "All rows were dropped due to missing values (NaNs) in the dataset."}
 
     alternative_causes = discover_stronger_causes(df_clean, treatment, outcome, valid_confounders)
     
@@ -114,28 +120,3 @@ def run_causal_analysis(df: pd.DataFrame, treatment: str, outcome: str, confound
         }
     except Exception as e:
         return {"status": "error", "message": f"DoWhy calculation failed: {str(e)}"}
-
-if __name__ == "__main__":
-    print("Testing Causal Engine with 100 rows of robust simulated data...")
-    
-    np.random.seed(42)
-    delayed = np.random.randint(0, 2, 100)
-    freight = np.random.uniform(10, 100, 100)
-    review = 5.0 - (1.5 * delayed) - (0.01 * freight) + np.random.normal(0, 0.5, 100)
-
-    dummy_data = pd.DataFrame({
-        "delayed_shipping": delayed,
-        "review_score": review,
-        "freight_value": freight
-    })
-    
-    result = run_causal_analysis(dummy_data, "delayed_shipping", "review_score", ["freight_value"])
-    
-    if result["status"] == "success":
-        print(f"SUCCESS! Engine ATE: {result['ate']}")
-        if result['alternative_causes']:
-            print("\n💡 DISCOVERY ALERT: The engine found a stronger cause!")
-            for alt in result['alternative_causes']:
-                print(f"- '{alt['variable']}' impact: {alt['confounder_impact']} vs Treatment impact: {alt['treatment_impact']}.")
-    else:
-        print(f"\nCRITICAL MATH ERROR: {result['message']}")
