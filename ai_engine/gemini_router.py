@@ -18,7 +18,6 @@ def parse_business_question(user_question: str) -> dict:
     
     rag_context = retrieve_relevant_tables(user_question, top_k=3)
     
-    # PERFECTED PROMPT: Plain English instructions to guarantee strict JSON formatting
     system_prompt = f"""
     You are an expert Data Scientist and Causal Inference Assistant.
     You have access to a relational SQLite database. Based on semantic search, here are the relevant tables for the user's query:
