@@ -8,11 +8,11 @@ from math_engine.causal_model import run_causal_analysis
 st.set_page_config(page_title="Causal AI Engine", layout="wide")
 
 st.title("Enterprise Causal AI Engine")
-st.markdown("Autonomously translates natural language to SQL via RAG and mathematically verifies the Average Treatment Effect (ATE).")
+st.markdown("Autonomously translates natural language to SQL via RAG and mathematically verifies the Average Treatment Effect (ATE) using our custom IPTW algorithm.")
 
 user_query = st.text_input(
     "Ask a causal business question:", 
-    placeholder="e.g., Does shipping delay cause lower review scores, controlling for freight price?"
+    placeholder="e.g., Does paying in high installments cause higher total payment values, controlling for sequential payments?"
 )
 
 if st.button("Analyze Causal Impact"):
@@ -48,7 +48,7 @@ if st.button("Analyze Causal Impact"):
                 with st.expander("View Raw Data Preview"):
                     st.dataframe(df.head())
                 
-                with st.spinner("Calculating Average Treatment Effect (ATE) via Propensity Score Weighting..."):
+                with st.spinner("Calculating Custom Algorithmic ATE via Propensity Score Weighting..."):
                     math_result = run_causal_analysis(
                         df=df,
                         treatment=ai_response["treatment"],
@@ -59,15 +59,15 @@ if st.button("Analyze Causal Impact"):
                 if math_result["status"] == "error":
                     st.error(f"Math Engine Error: {math_result['message']}")
                 else:
-                    st.success("Deterministic Causal Math Complete!")
+                    st.success("Custom Proprietary Math Complete!")
                     
                     st.markdown("### The Causal Impact (ATE)")
                     st.metric(
-                        label=f"Impact of {ai_response['treatment']} on {ai_response['outcome']}", 
-                        value=math_result["ate"]
+                        label=f"Custom Proprietary ATE (Impact of {ai_response['treatment']} on {ai_response['outcome']})", 
+                        value=math_result["custom_ate"]
                     )
                     
-                    if math_result["alternative_causes"]:
+                    if math_result.get("alternative_causes"):
                         st.warning("💡 **Causal Discovery Alert: Stronger Confounders Found!**")
                         for alt in math_result['alternative_causes']:
                             st.write(f"- Variable **'{alt['variable']}'** has a stronger impact score ({alt['confounder_impact']}) than the requested treatment ({alt['treatment_impact']}).")
