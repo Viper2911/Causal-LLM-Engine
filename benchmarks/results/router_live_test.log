@@ -1,0 +1,11 @@
+Notice: Using cached semantic query plan for 'freight'.
+{
+  "treatment": "freight_value",
+  "outcome": "review_score",
+  "confounders": [
+    "price",
+    "product_weight_g"
+  ],
+  "sql_query": "SELECT oi.freight_value, r.review_score, oi.price, p.product_weight_g FROM order_items oi JOIN order_reviews r ON oi.order_id = r.order_id JOIN products p ON oi.product_id = p.product_id WHERE oi.freight_value IS NOT NULL AND r.review_score IS NOT NULL",
+  "business_hypothesis": "Testing whether higher freight costs negatively impact customer satisfaction and lead to lower review scores, after controlling for price and weight."
+}

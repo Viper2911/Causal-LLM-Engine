@@ -1,0 +1,25 @@
+[1/7] price        status=success naive=-0.0008 dowhy=0.0451 rawSMD=0.5999 wSMD=0.0034
+[2/7] freight      status=success naive=-0.1074 dowhy=-0.1148 rawSMD=0.5933 wSMD=0.0349
+[3/7] photo        degenerate_split
+[4/7] description  status=success naive=0.0397 dowhy=0.0388 rawSMD=0.251 wSMD=0.0441
+[5/7] weight       status=success naive=9.0407 dowhy=6.177 rawSMD=0.4142 wSMD=0.2609
+[6/7] length       status=success naive=6.5665 dowhy=0.0905 rawSMD=0.7329 wSMD=0.0863
+[7/7] installment  status=success naive=59.7865 dowhy=59.7865 rawSMD=1.816 wSMD=1.816
+
+PEHE synthetic benchmark: {
+  "true_ate": 2.5,
+  "naive_diff": {
+    "estimated_ate": 2.6614,
+    "pehe": 0.1614
+  },
+  "unadjusted_ols": {
+    "estimated_ate": 2.524,
+    "pehe": 0.024
+  },
+  "dowhy_psw": {
+    "estimated_ate": 2.4851,
+    "pehe": 0.0149
+  }
+}
+
+wrote benchmarks/results/baseline_cases.json

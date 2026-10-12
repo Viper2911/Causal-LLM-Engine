@@ -1,0 +1,9 @@
+[1/6] price        status=success rows=112,372
+[2/6] freight      status=success rows=112,372
+[3/6] photo        status=success rows=110,774
+[4/6] description  status=success rows=110,774
+[5/6] weight       status=success rows=112,632
+[6/6] length       status=success rows=112,632
+[7/6] installment  status=success rows=103,886
+
+wrote benchmarks/results/olist_cases.json

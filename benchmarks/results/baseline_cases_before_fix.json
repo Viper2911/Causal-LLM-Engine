@@ -1,0 +1,131 @@
+{
+  "cases": [
+    {
+      "idx": 1,
+      "key": "installment",
+      "treatment": "payment_installments",
+      "outcome": "payment_value",
+      "confounders": [
+        "payment_sequential"
+      ],
+      "rows": 103886,
+      "n_treated": 103884,
+      "n_control": 2,
+      "naive_ate": 59.7865,
+      "raw_smd": 1.816,
+      "weighted_smd_standard_psw": 1.816,
+      "dowhy_ate": 59.7865,
+      "placebo_new_effect": -0.7465,
+      "status": "success"
+    },
+    {
+      "idx": 2,
+      "key": "freight",
+      "treatment": "freight_value",
+      "outcome": "review_score",
+      "confounders": [
+        "price",
+        "product_weight_g"
+      ],
+      "rows": 112372,
+      "n_treated": 56181,
+      "n_control": 56173,
+      "naive_ate": -0.1074,
+      "raw_smd": 0.5933,
+      "weighted_smd_standard_psw": 0.0349,
+      "dowhy_ate": -0.1148,
+      "placebo_new_effect": 0.0494,
+      "status": "success"
+    },
+    {
+      "idx": 3,
+      "key": "photo",
+      "treatment": "product_photos_qty",
+      "outcome": "review_score",
+      "confounders": [
+        "price"
+      ],
+      "rows": 110774,
+      "n_treated": 54831,
+      "n_control": 55943,
+      "naive_ate": 0.0739,
+      "raw_smd": 0.076,
+      "weighted_smd_standard_psw": 0.004,
+      "dowhy_ate": 0.0745,
+      "placebo_new_effect": -0.0071,
+      "status": "success"
+    },
+    {
+      "idx": 4,
+      "key": "description",
+      "treatment": "product_description_lenght",
+      "outcome": "review_score",
+      "confounders": [
+        "price",
+        "product_photos_qty"
+      ],
+      "rows": 110774,
+      "n_treated": 55439,
+      "n_control": 55335,
+      "naive_ate": 0.0397,
+      "raw_smd": 0.251,
+      "weighted_smd_standard_psw": 0.0441,
+      "dowhy_ate": 0.0388,
+      "placebo_new_effect": -0.0069,
+      "status": "success"
+    },
+    {
+      "idx": 5,
+      "key": "weight",
+      "treatment": "product_weight_g",
+      "outcome": "freight_value",
+      "confounders": [
+        "price"
+      ],
+      "rows": 112632,
+      "n_treated": 56672,
+      "n_control": 55960,
+      "naive_ate": 9.0407,
+      "raw_smd": 0.4142,
+      "weighted_smd_standard_psw": 0.2609,
+      "dowhy_ate": 6.177,
+      "placebo_new_effect": -7.4196,
+      "status": "success"
+    },
+    {
+      "idx": 6,
+      "key": "length",
+      "treatment": "product_length_cm",
+      "outcome": "freight_value",
+      "confounders": [
+        "product_weight_g"
+      ],
+      "rows": 112632,
+      "n_treated": 57375,
+      "n_control": 55257,
+      "naive_ate": 6.5665,
+      "raw_smd": 0.7329,
+      "weighted_smd_standard_psw": 0.0863,
+      "dowhy_ate": 0.0905,
+      "placebo_new_effect": -13.0692,
+      "status": "success"
+    }
+  ],
+  "pehe_benchmark": {
+    "true_ate": 2.5,
+    "naive_diff": {
+      "estimated_ate": 2.6614,
+      "pehe": 0.1614
+    },
+    "unadjusted_ols": {
+      "estimated_ate": 2.524,
+      "pehe": 0.024
+    },
+    "dowhy_psw": {
+      "estimated_ate": 2.4851,
+      "pehe": 0.0149
+    }
+  },
+  "seed": 42,
+  "estimator": "standard DoWhy backdoor.propensity_score_weighting (default settings)"
+}

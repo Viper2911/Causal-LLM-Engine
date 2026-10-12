@@ -1,0 +1,371 @@
+[
+  {
+    "idx": 1,
+    "key": "price",
+    "hypothesis": "Higher product prices lead to lower customer review scores when controlling for shipping fees.",
+    "treatment": "price",
+    "outcome": "review_score",
+    "confounders": [
+      "freight_value"
+    ],
+    "rows": 112372,
+    "n_clean": 112372,
+    "n_treated": 56483,
+    "n_control": 55889,
+    "status": "success",
+    "our_ate": 0.0451,
+    "ci_95": [
+      -0.0027,
+      0.0929
+    ],
+    "p_value": 0.0645,
+    "propensity_auc": 0.71,
+    "refutation_pass_rate": "0%",
+    "placebo_new_effect": 0.0631,
+    "random_cause_drift_pct": 164.08,
+    "covariate_balance": {
+      "raw_smd": 0.5999,
+      "weighted_smd": 0.0034,
+      "bias_reduction_pct": 99.4,
+      "status": "Balanced (SMD \u2264 0.10)",
+      "details": [
+        {
+          "confounder": "freight_value",
+          "raw_smd": 0.5999,
+          "weighted_smd": 0.0034,
+          "bias_reduction_pct": 99.4,
+          "balanced": true
+        }
+      ]
+    },
+    "pehe_benchmark": {
+      "true_ate": 2.5,
+      "estimated_ate": 2.4851,
+      "pehe_score": 0.0149,
+      "status": "Verified (PEHE \u2248 0.0)"
+    },
+    "alternative_causes": [
+      {
+        "variable": "freight_value",
+        "confounder_impact": 0.0393,
+        "treatment_impact": 0.011
+      }
+    ]
+  },
+  {
+    "idx": 2,
+    "key": "freight",
+    "hypothesis": "Testing whether higher freight costs negatively impact customer satisfaction and lead to lower review scores, after controlling for price and weight.",
+    "treatment": "freight_value",
+    "outcome": "review_score",
+    "confounders": [
+      "price",
+      "product_weight_g"
+    ],
+    "rows": 112372,
+    "n_clean": 112354,
+    "n_treated": 56181,
+    "n_control": 56173,
+    "status": "success",
+    "our_ate": -0.1148,
+    "ci_95": [
+      -0.1467,
+      -0.0829
+    ],
+    "p_value": 0.0001,
+    "propensity_auc": 0.751,
+    "refutation_pass_rate": "0%",
+    "placebo_new_effect": 0.0612,
+    "random_cause_drift_pct": 16.03,
+    "covariate_balance": {
+      "raw_smd": 0.5933,
+      "weighted_smd": 0.0349,
+      "bias_reduction_pct": 94.1,
+      "status": "Balanced (SMD \u2264 0.10)",
+      "details": [
+        {
+          "confounder": "price",
+          "raw_smd": 0.5277,
+          "weighted_smd": 0.0474,
+          "bias_reduction_pct": 91.0,
+          "balanced": true
+        },
+        {
+          "confounder": "product_weight_g",
+          "raw_smd": 0.6588,
+          "weighted_smd": 0.0223,
+          "bias_reduction_pct": 96.6,
+          "balanced": true
+        }
+      ]
+    },
+    "pehe_benchmark": {
+      "true_ate": 2.5,
+      "estimated_ate": 2.4851,
+      "pehe_score": 0.0149,
+      "status": "Verified (PEHE \u2248 0.0)"
+    },
+    "alternative_causes": []
+  },
+  {
+    "idx": 3,
+    "key": "photo",
+    "hypothesis": "Having more product photos increases customer review scores by setting clearer expectations, controlling for the product's price.",
+    "treatment": "product_photos_qty",
+    "outcome": "review_score",
+    "confounders": [
+      "price"
+    ],
+    "rows": 110774,
+    "n_clean": 110774,
+    "n_treated": 54831,
+    "n_control": 55943,
+    "status": "success",
+    "our_ate": 0.0745,
+    "ci_95": [
+      0.0299,
+      0.1191
+    ],
+    "p_value": 0.0011,
+    "propensity_auc": 0.504,
+    "refutation_pass_rate": "100%",
+    "placebo_new_effect": -0.0412,
+    "random_cause_drift_pct": 6.44,
+    "covariate_balance": {
+      "raw_smd": 0.076,
+      "weighted_smd": 0.004,
+      "bias_reduction_pct": 94.7,
+      "status": "Balanced (SMD \u2264 0.10)",
+      "details": [
+        {
+          "confounder": "price",
+          "raw_smd": 0.076,
+          "weighted_smd": 0.004,
+          "bias_reduction_pct": 94.7,
+          "balanced": true
+        }
+      ]
+    },
+    "pehe_benchmark": {
+      "true_ate": 2.5,
+      "estimated_ate": 2.4851,
+      "pehe_score": 0.0149,
+      "status": "Verified (PEHE \u2248 0.0)"
+    },
+    "alternative_causes": []
+  },
+  {
+    "idx": 4,
+    "key": "description",
+    "hypothesis": "Testing whether longer product descriptions lead to higher customer review scores, controlling for item price and photo count.",
+    "treatment": "product_description_lenght",
+    "outcome": "review_score",
+    "confounders": [
+      "price",
+      "product_photos_qty"
+    ],
+    "rows": 110774,
+    "n_clean": 110774,
+    "n_treated": 55439,
+    "n_control": 55335,
+    "status": "success",
+    "our_ate": 0.0388,
+    "ci_95": [
+      -0.0087,
+      0.0863
+    ],
+    "p_value": 0.109,
+    "propensity_auc": 0.604,
+    "refutation_pass_rate": "50%",
+    "placebo_new_effect": -0.045,
+    "random_cause_drift_pct": 33.76,
+    "covariate_balance": {
+      "raw_smd": 0.251,
+      "weighted_smd": 0.0441,
+      "bias_reduction_pct": 82.4,
+      "status": "Balanced (SMD \u2264 0.10)",
+      "details": [
+        {
+          "confounder": "price",
+          "raw_smd": 0.2689,
+          "weighted_smd": 0.0856,
+          "bias_reduction_pct": 68.2,
+          "balanced": true
+        },
+        {
+          "confounder": "product_photos_qty",
+          "raw_smd": 0.233,
+          "weighted_smd": 0.0027,
+          "bias_reduction_pct": 98.9,
+          "balanced": true
+        }
+      ]
+    },
+    "pehe_benchmark": {
+      "true_ate": 2.5,
+      "estimated_ate": 2.4851,
+      "pehe_score": 0.0149,
+      "status": "Verified (PEHE \u2248 0.0)"
+    },
+    "alternative_causes": [
+      {
+        "variable": "product_photos_qty",
+        "confounder_impact": 0.0215,
+        "treatment_impact": 0.0128
+      }
+    ]
+  },
+  {
+    "idx": 5,
+    "key": "weight",
+    "hypothesis": "Heavier products lead to higher freight shipping costs even after controlling for the item's purchase price.",
+    "treatment": "product_weight_g",
+    "outcome": "freight_value",
+    "confounders": [
+      "price"
+    ],
+    "rows": 112632,
+    "n_clean": 112632,
+    "n_treated": 56672,
+    "n_control": 55960,
+    "status": "success",
+    "our_ate": 6.177,
+    "ci_95": [
+      5.756,
+      6.598
+    ],
+    "p_value": 0.0001,
+    "propensity_auc": 0.736,
+    "refutation_pass_rate": "50%",
+    "placebo_new_effect": -7.1246,
+    "random_cause_drift_pct": 2.72,
+    "covariate_balance": {
+      "raw_smd": 0.4142,
+      "weighted_smd": 0.2609,
+      "bias_reduction_pct": 37.0,
+      "status": "Bias Substantially Reduced",
+      "details": [
+        {
+          "confounder": "price",
+          "raw_smd": 0.4142,
+          "weighted_smd": 0.2609,
+          "bias_reduction_pct": 37.0,
+          "balanced": false
+        }
+      ]
+    },
+    "pehe_benchmark": {
+      "true_ate": 2.5,
+      "estimated_ate": 2.4851,
+      "pehe_score": 0.0149,
+      "status": "Verified (PEHE \u2248 0.0)"
+    },
+    "alternative_causes": [
+      {
+        "variable": "price",
+        "confounder_impact": 0.3717,
+        "treatment_impact": 0.2107
+      }
+    ]
+  },
+  {
+    "idx": 6,
+    "key": "length",
+    "hypothesis": "Increasing product length leads to higher freight shipping costs even after controlling for product weight.",
+    "treatment": "product_length_cm",
+    "outcome": "freight_value",
+    "confounders": [
+      "product_weight_g"
+    ],
+    "rows": 112632,
+    "n_clean": 112632,
+    "n_treated": 57375,
+    "n_control": 55257,
+    "status": "success",
+    "our_ate": 0.0905,
+    "ci_95": [
+      -0.5741,
+      0.7551
+    ],
+    "p_value": 0.7895,
+    "propensity_auc": 0.825,
+    "refutation_pass_rate": "0%",
+    "placebo_new_effect": -12.9784,
+    "random_cause_drift_pct": 178.78,
+    "covariate_balance": {
+      "raw_smd": 0.7329,
+      "weighted_smd": 0.0863,
+      "bias_reduction_pct": 88.2,
+      "status": "Balanced (SMD \u2264 0.10)",
+      "details": [
+        {
+          "confounder": "product_weight_g",
+          "raw_smd": 0.7329,
+          "weighted_smd": 0.0863,
+          "bias_reduction_pct": 88.2,
+          "balanced": true
+        }
+      ]
+    },
+    "pehe_benchmark": {
+      "true_ate": 2.5,
+      "estimated_ate": 2.4851,
+      "pehe_score": 0.0149,
+      "status": "Verified (PEHE \u2248 0.0)"
+    },
+    "alternative_causes": [
+      {
+        "variable": "product_weight_g",
+        "confounder_impact": 0.6108,
+        "treatment_impact": 0.0011
+      }
+    ]
+  },
+  {
+    "idx": 7,
+    "key": "installment",
+    "hypothesis": "Testing whether paying in a higher number of installments causes higher payment values when controlling for payment sequential.",
+    "treatment": "payment_installments",
+    "outcome": "payment_value",
+    "confounders": [
+      "payment_sequential"
+    ],
+    "rows": 103886,
+    "n_clean": 103886,
+    "n_treated": 51338,
+    "n_control": 52548,
+    "status": "success",
+    "our_ate": 81.9279,
+    "ci_95": [
+      75.6467,
+      88.2091
+    ],
+    "p_value": 0.0001,
+    "propensity_auc": 0.539,
+    "refutation_pass_rate": "50%",
+    "placebo_new_effect": -26.7799,
+    "random_cause_drift_pct": 3.5,
+    "covariate_balance": {
+      "raw_smd": 0.2509,
+      "weighted_smd": 0.0948,
+      "bias_reduction_pct": 62.2,
+      "status": "Balanced (SMD \u2264 0.10)",
+      "details": [
+        {
+          "confounder": "payment_sequential",
+          "raw_smd": 0.2509,
+          "weighted_smd": 0.0948,
+          "bias_reduction_pct": 62.2,
+          "balanced": true
+        }
+      ]
+    },
+    "pehe_benchmark": {
+      "true_ate": 2.5,
+      "estimated_ate": 2.4851,
+      "pehe_score": 0.0149,
+      "status": "Verified (PEHE \u2248 0.0)"
+    },
+    "alternative_causes": []
+  }
+]

@@ -9,8 +9,34 @@ from sklearn.metrics import roc_auc_score
 
 warnings.filterwarnings('ignore')
 
+MIN_GROUP_COUNT = 30
+MIN_GROUP_SHARE = 0.01
+BOOTSTRAP_ITERATIONS = 50
+MIN_PS_SCORE = 0.05
+MAX_PS_SCORE = 0.95
+RANDOM_SEED = 42
+
+
+def _usable_split(binary: pd.Series) -> bool:
+    """A binarized treatment is usable only if both arms have enough rows and mass."""
+    n = len(binary)
+    if n == 0:
+        return False
+    n_treated = int(binary.sum())
+    n_control = n - n_treated
+    if min(n_treated, n_control) < MIN_GROUP_COUNT:
+        return False
+    return min(n_treated, n_control) / n >= MIN_GROUP_SHARE
+
+
 def preprocess_data(df: pd.DataFrame, treatment: str, outcome: str, confounders: list) -> pd.DataFrame:
-    """Prepares the DataFrame for DoWhy with Smart Binarization V2 and NaN handling."""
+    """Prepares the DataFrame for DoWhy with guarded binarization and NaN handling.
+
+    Continuous treatments are split at the median; when the median sits on a
+    mass point (e.g. installments == 1 for most rows) or the split leaves fewer
+    than MIN_GROUP_COUNT rows / MIN_GROUP_SHARE mass in an arm, the strict
+    '> median' split is used instead. A split is refused when neither works.
+    """
     df_clean = df.copy()
     
     cols_to_check = [treatment, outcome] + confounders
@@ -28,12 +54,26 @@ def preprocess_data(df: pd.DataFrame, treatment: str, outcome: str, confounders:
         
         if unique_count > 2:
             median_val = df_clean[treatment].median()
-            temp_treatment = (df_clean[treatment] >= median_val).astype(int)
-            
-            if temp_treatment.nunique() < 2:
-                temp_treatment = (df_clean[treatment] > median_val).astype(int)
-                
-            df_clean[treatment] = temp_treatment
+            candidates = [
+                (df_clean[treatment] >= median_val).astype(int),
+                (df_clean[treatment] > median_val).astype(int),
+            ]
+            chosen = next(
+                (c for c in candidates if c.nunique() >= 2 and _usable_split(c)),
+                None,
+            )
+            if chosen is None:
+                shares = [
+                    f"{c.mean():.3f} treated (>= median)" if i == 0 else f"{c.mean():.3f} treated (> median)"
+                    for i, c in enumerate(candidates)
+                ]
+                raise ValueError(
+                    f"Treatment '{treatment}' is continuous with median {median_val} and cannot be "
+                    f"binarized into two usable groups (min {MIN_GROUP_COUNT} rows and "
+                    f"{MIN_GROUP_SHARE:.0%} share per group). Candidate splits: {shares}. "
+                    f"A near-constant treatment cannot support a valid control group."
+                )
+            df_clean[treatment] = chosen
             
         elif unique_count == 2:
             unique_vals = sorted(df_clean[treatment].unique())
@@ -129,7 +169,7 @@ def calculate_covariate_balance(df: pd.DataFrame, treatment: str, confounders: l
     treated_idx = (T == 1)
     control_idx = (T == 0)
 
-    e_x = np.clip(propensity_scores, 0.01, 0.99)
+    e_x = np.clip(propensity_scores, MIN_PS_SCORE, MAX_PS_SCORE)
     w = np.where(T == 1, 1.0 / e_x, 1.0 / (1.0 - e_x))
     
     w_t = w[treated_idx]
@@ -206,6 +246,7 @@ def calculate_custom_ate_iptw(df: pd.DataFrame, treatment: str, outcome: str, co
     """
     Proprietary implementation of Hajek-Normalized Inverse Probability of Treatment Weighting (IPTW).
     Returns ATE and diagnostic metrics: Covariate Balance (SMD), Propensity AUC, P-Value, and 95% CI.
+    Propensity scores are clipped to [0.05, 0.95] and the bootstrap is seeded (B=50) for stability.
     """
     T = df[treatment].astype(int).values
     Y = df[outcome].values
@@ -239,7 +280,7 @@ def calculate_custom_ate_iptw(df: pd.DataFrame, treatment: str, outcome: str, co
     lr.fit(X, T)
     
     e_x = lr.predict_proba(X)[:, 1]
-    e_x = np.clip(e_x, 0.01, 0.99)
+    e_x = np.clip(e_x, MIN_PS_SCORE, MAX_PS_SCORE)
     
     # 1. Covariate Balance (SMD) on REAL Data
     covariate_balance = calculate_covariate_balance(df, treatment, confounders, e_x)
@@ -266,10 +307,11 @@ def calculate_custom_ate_iptw(df: pd.DataFrame, treatment: str, outcome: str, co
     # 4. Fast Bootstrap Estimation for Standard Error, 95% CI, and P-Value
     n_samples = len(df)
     sub_size = min(n_samples, 20000)
-    n_boot = 30
+    n_boot = BOOTSTRAP_ITERATIONS
+    rng = np.random.default_rng(RANDOM_SEED)
     boot_ates = []
     for _ in range(n_boot):
-        idx = np.random.choice(n_samples, size=sub_size, replace=True)
+        idx = rng.choice(n_samples, size=sub_size, replace=True)
         b_T, b_Y, b_e = T[idx], Y[idx], e_x[idx]
         b_wt = b_T / b_e
         b_wc = (1 - b_T) / (1 - b_e)
@@ -306,7 +348,10 @@ def run_causal_analysis(df: pd.DataFrame, treatment: str, outcome: str, confound
     if df.empty: return {"status": "error", "message": "DataFrame is empty."}
     valid_confounders = [c for c in confounders if c in df.columns]
     
-    df_clean = preprocess_data(df, treatment, outcome, valid_confounders)
+    try:
+        df_clean = preprocess_data(df, treatment, outcome, valid_confounders)
+    except Exception as e:
+        return {"status": "error", "message": f"Data validation failed: {str(e)}"}
     if df_clean.empty: return {"status": "error", "message": "All rows dropped due to NaN values."}
     
     if df_clean[treatment].nunique() < 2:
@@ -332,7 +377,7 @@ def run_causal_analysis(df: pd.DataFrame, treatment: str, outcome: str, confound
         placebo_passed = False
         placebo_new_effect = 0.0
         try:
-            placebo = model.refute_estimate(identified_estimand, estimate, method_name="placebo_treatment_refuter", num_simulations=3)
+            placebo = model.refute_estimate(identified_estimand, estimate, method_name="placebo_treatment_refuter", num_simulations=3, random_state=RANDOM_SEED)
             placebo_summary = str(placebo)
             placebo_new_effect = round(float(getattr(placebo, 'new_effect', 0.0)), 4)
             placebo_passed = abs(placebo_new_effect) < max(0.05, 0.15 * abs(custom_ate))
@@ -345,7 +390,7 @@ def run_causal_analysis(df: pd.DataFrame, treatment: str, outcome: str, confound
         random_cause_passed = False
         random_cause_drift = 0.0
         try:
-            random_cause = model.refute_estimate(identified_estimand, estimate, method_name="random_common_cause", num_simulations=3)
+            random_cause = model.refute_estimate(identified_estimand, estimate, method_name="random_common_cause", num_simulations=3, random_state=RANDOM_SEED)
             random_cause_summary = str(random_cause)
             random_new_effect = round(float(getattr(random_cause, 'new_effect', custom_ate)), 4)
             if abs(custom_ate) > 1e-4:

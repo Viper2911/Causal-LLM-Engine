@@ -144,7 +144,7 @@ Where:
 
 The difference between these weighted means estimates the Average Treatment Effect under the required causal assumptions.
 
-The implementation clips propensity scores to the interval \([0.01,0.99]\) to limit extreme weights. This does not, by itself, guarantee that the positivity assumption is satisfied.
+The implementation clips propensity scores to the interval \([0.05,0.95]\) to limit extreme weights. This does not, by itself, guarantee that the positivity assumption is satisfied.
 
 ### 3. Covariate Balance (Standardized Mean Difference)
 
@@ -207,6 +207,8 @@ A p-value below 0.05 is commonly treated as statistically significant under the 
 ---
 
 ## Empirical Results Across 4 Real-World Test Cases
+
+> **Note (engine hardening, 2026-10-12):** These runs were recorded before the engine was hardened with guarded binarization, DoWhy-aligned propensity clipping (`[0.05, 0.95]`) and a seeded `B = 50` bootstrap. The post-hardening measurements (7/7 valid estimates, 6/7 balanced within SMD <= 0.10, 90.8% lower PEHE than the naive baseline, 19x better balance on the installment question than the standard median-split pipeline) and the full comparison against the Microsoft Research baselines are documented in `RESULTS.docx` and reproducible from `benchmarks/results/`.
 
 The results below come from live runs of the Streamlit dashboard on the Brazilian E-Commerce Public Dataset by Olist, which contains multiple relational tables covering orders, products, payments, shipping, and customer reviews.
 
@@ -364,7 +366,7 @@ Open the local address displayed in the terminal, usually:
 @article{kiciman2023causal,
   title={Causal Reasoning and Large Language Models: Opening a New Frontier for Causality},
   author={Kiciman, Emre and Ness, Robert and Sharma, Amit and Tan, Chenhao},
-  journal={arXiv preprint arXiv:2304.15044},
+  journal={arXiv preprint arXiv:2305.00050},
   year={2023}
 }
 
