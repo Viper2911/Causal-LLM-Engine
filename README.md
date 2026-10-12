@@ -151,13 +151,19 @@ The implementation clips propensity scores to the interval \([0.05,0.95]\) to li
 Covariate balance is the main diagnostic used to judge whether weighting removed confounding bias. For each confounder, the Standardized Mean Difference is computed before and after weighting:
 
 $$
-SMD = \frac{\left|\bar{X}_{1} - \bar{X}_{0}\right|}{\sqrt{\frac{s_1^2 + s_0^2}{2}}}
+SMD =
+\frac{\left|\bar{X}_{1}-\bar{X}_{0}\right|}
+{\sqrt{\frac{s_1^2+s_0^2}{2}}}
 $$
 
-Where \(\bar{X}_{1}, \bar{X}_{0}\) are the (weighted) confounder means in the treated and control groups, and \(s_1^2, s_0^2\) are the corresponding variances. A weighted SMD of 0.10 or below is the target for successful balance (Austin 2011, Stuart 2010). The dashboard reports the mean SMD across confounders and the percentage of bias removed:
+Where \(\bar{X}_{1}\) and \(\bar{X}_{0}\) are the confounder means in the treated and control groups, and \(s_1^2\) and \(s_0^2\) are the corresponding variances.
+
+A weighted SMD of 0.10 or below is the target for successful balance (Austin 2011, Stuart 2010). The dashboard reports the mean SMD across confounders and the percentage of bias removed:
 
 $$
-\text{Bias Reduction (\%)} = \frac{SMD_{raw} - SMD_{weighted}}{SMD_{raw}} \times 100
+\text{Bias Reduction (\%)} =
+\frac{SMD_{\text{raw}}-SMD_{\text{weighted}}}
+{SMD_{\text{raw}}}\times100
 $$
 
 ### 4. Bootstrap Statistical Inference
@@ -182,7 +188,7 @@ $$
 The normal-approximation 95% confidence interval is:
 
 $$
-95\%\ CI =
+95\%\,CI =
 \left[
 \widehat{ATE}-1.96\widehat{SE},
 \widehat{ATE}+1.96\widehat{SE}
@@ -206,30 +212,39 @@ A p-value below 0.05 is commonly treated as statistically significant under the 
 
 ---
 
-## Empirical Results Across 4 Real-World Test Cases
+## Empirical Results Across 6 Real-World Test Cases
 
 > **Note (engine hardening, 2026-10-12):** These runs were recorded before the engine was hardened with guarded binarization, DoWhy-aligned propensity clipping (`[0.05, 0.95]`) and a seeded `B = 50` bootstrap. The post-hardening measurements (7/7 valid estimates, 6/7 balanced within SMD <= 0.10, 90.8% lower PEHE than the naive baseline, 19x better balance on the installment question than the standard median-split pipeline) and the full comparison against the Microsoft Research baselines are documented in `RESULTS.docx` and reproducible from `benchmarks/results/`.
 
-The results below come from live runs of the Streamlit dashboard on the Brazilian E-Commerce Public Dataset by Olist, which contains multiple relational tables covering orders, products, payments, shipping, and customer reviews.
+The results below combine the original four dashboard runs with two additional tests from the enterprise results table. They use the Brazilian E-Commerce Public Dataset by Olist, which contains multiple relational tables covering orders, products, payments, shipping, and customer reviews.
 
 | Run | Business Question | Treatment → Outcome (Controls) | Sample Size | Estimated ATE | 95% CI | p-value | Covariate Balance (SMD, Raw → Weighted) | Propensity AUC | Refutation Pass Rate |
-| :---: | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+|:---:|:---|:---|---:|:---:|:---:|:---:|:---|:---:|:---:|
 | 1 | Does a higher product price cause lower review scores, controlling for the shipping fee? | `price` → `review_score` (`freight_value`) | 112,372 | `+0.0789` | `[0.0502, 0.1076]` | `0.0001` | `0.5999 → 0.2443` (59.3% reduction) | `0.710` | `50%` |
 | 2 | Does shipping delay cause lower review scores, controlling for freight price? | `freight_value` → `review_score` (`price`, `product_weight_g`) | 112,372 | `-0.1111` | `[-0.1827, -0.0395]` | `0.0023` | `0.5933 → 0.2293` (61.3% reduction) | `0.751` | `50%` |
 | 3 | Does a higher count of product photos increase review scores when price is held constant? | `product_photos_qty` → `review_score` (`price`) | 110,774 | `+0.0745` | `[0.049, 0.100]` | `0.0001` | `0.076 → 0.004` (94.7% reduction) | `0.504` | `100%` |
 | 4 | Does offering a discount on the product price increase the number of units sold, after controlling for product category and shipping fee? | `price` → `review_score` (`freight_value`) | 112,372 | `+0.0789` | `[-0.0127, 0.1705]` | `0.0912` | `0.5999 → 0.2443` (59.3% reduction) | `0.710` | `50%` |
+| 5 | Does product weight increase freight cost, controlling for product price? | `product_weight_g` → `freight_value` (`price`) | 112,632 | `+4.6150` | `[+4.1750, +5.0550]` | Not reported | `0.019` (weighted SMD; < 0.10 target) | `0.736` | `50%` |
+| 6 | Does product length affect freight cost, controlling for product weight? | `product_length_cm` → `freight_value` (`product_weight_g`) | 112,632 | `-2.4567` | `[-3.0807, -1.8327]` | Not reported | `0.024` (weighted SMD; < 0.10 target) | `0.825` | `50%` |
 
 ### Key Findings per Run
 
 1. **Price → Review Score:** The estimated effect is positive and the interval excludes zero, which is the opposite direction from the hypothesis that higher prices lower reviews. The weighted SMD for `freight_value` is 0.2443, above the 0.10 target, so residual confounding remains and the estimate should be treated as exploratory.
+
 2. **Freight Value → Review Score:** The estimate is negative with a confidence interval that excludes zero (p = 0.0023). Balance is incomplete: weighted SMDs are 0.1674 for `price` and 0.2913 for `product_weight_g`, both above 0.10. The question asked about "shipping delay", but the router mapped it to `freight_value` (shipping cost), which is a different variable.
+
 3. **Product Photos → Review Score:** This is the only run that meets the balance criterion (weighted SMD 0.004, all refutation tests passed). The propensity AUC of 0.504 means price barely predicts treatment, so there is little confounding to adjust for. The positive estimate is statistically significant.
+
 4. **Discount → Units Sold (variable-mapping failure):** The question asked about units sold, but the router mapped it to the same `price` → `review_score` pair as Run 1 instead of a units-sold outcome. The result therefore does not answer the question asked. The interval includes zero (p = 0.0912), so the effect is only directional. The causal discovery module flagged `freight_value` as a stronger driver (impact score 0.0393 vs 0.011 for the requested treatment).
 
-### Aggregate Diagnostics (Mean of the 4 Runs)
+5. **Product Weight → Freight Cost:** The estimated ATE is `+4.6150`, with a 95% confidence interval of `[+4.1750, +5.0550]`. The weighted SMD is `0.019`, below the 0.10 balance target, and the propensity AUC is `0.736`. The recorded refutation pass rate is 50%. The causal discovery module ranked `price` as a stronger driver than product weight (`0.3717` vs `0.2107`), suggesting carrier pricing or insurance tiers may also influence freight cost.
+
+6. **Product Length → Freight Cost:** The estimated ATE is `-2.4567`, with a 95% confidence interval of `[-3.0807, -1.8327]`. The weighted SMD is `0.024`, below the 0.10 balance target, and the propensity AUC is `0.825`. The recorded refutation pass rate is 50%. The causal discovery module found product weight (`0.6108`) much more influential than product length (`0.0011`), highlighting the importance of separating physical mass from package dimensions.
+
+### Aggregate Diagnostics (Original Four-Run Subset)
 
 | Metric | Value | Reading |
-| :--- | :---: | :--- |
+|:---|:---:|:---|
 | Mean raw SMD | `0.467` | Substantial confounding before weighting in 3 of 4 runs |
 | Mean weighted SMD | `0.181` | Above the 0.10 target; only Run 3 is balanced |
 | Mean bias reduction | `≈ 61%` | Weighting removed most, not all, of the imbalance |
@@ -247,7 +262,7 @@ The results below come from live runs of the Streamlit dashboard on the Brazilia
 ### Known Limitations
 
 - **Variable mapping:** The RAG router can silently substitute variables when the requested concept (for example, units sold or shipping delay) has no matching column, as seen in Runs 2 and 4. Mapped treatment, outcome and confounders should be checked against the question before the ATE is trusted.
-- **Residual imbalance:** Three of four runs finish with a weighted SMD above 0.10. Adding confounders such as product category, or trimming extreme propensity scores, may improve balance.
+- **Residual imbalance:** In the original four-run subset, three of four runs finish with a weighted SMD above 0.10. Adding confounders such as product category, or trimming extreme propensity scores, may improve balance.
 - **Bootstrap size:** B = 50 is small for stable confidence intervals.
 - **Continuous treatments:** Treatments are binarized at the median, which discards dose-response information.
 
